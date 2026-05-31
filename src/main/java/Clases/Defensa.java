@@ -1,0 +1,26 @@
+package Clases;
+
+import java.util.concurrent.Semaphore;
+
+public class Defensa {//Hilo defensa
+    public  Integer cantidadInterceptados = 0;
+    public int idDefensa = 0;
+    //public static Enum.EstadoDefensa estado;// true si esta disponible, false si esta interceptando un misil
+
+    public Defensa(int idDefensa) {
+        this.idDefensa = idDefensa;
+        //this.estado = Enum.EstadoDefensa.DISPONIBLE;
+    }
+
+    /*public static void InterceptarMisil(MisilObjetivo misil) {
+        try {
+            if(estado == Enum.EstadoDefensa.DISPONIBLE) {
+                //Hacemos la logica de interceptar
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+        }
+    }
+     */
+}
