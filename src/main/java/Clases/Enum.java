@@ -1,4 +1,4 @@
-package Clases.SupongoPronto;
+package Clases;
 
 public class Enum {
     public enum TipoZona {

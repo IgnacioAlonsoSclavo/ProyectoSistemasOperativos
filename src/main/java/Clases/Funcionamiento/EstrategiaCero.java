@@ -1,4 +1,4 @@
-package Clases.SupongoPronto;
+package Clases.Funcionamiento;
 
 public class EstrategiaCero {
 

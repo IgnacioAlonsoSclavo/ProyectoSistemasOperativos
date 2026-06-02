@@ -1,6 +1,7 @@
-package Clases;
+package Clases.Funcionamiento;
 import java.util.LinkedList;
 
+import Clases.Principales.MisilObjetivo;
 import Interfaces.*;
 
 public class EstrategiaUno implements Estrategias {
