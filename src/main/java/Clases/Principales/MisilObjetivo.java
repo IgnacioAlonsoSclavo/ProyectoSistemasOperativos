@@ -2,22 +2,22 @@ package Clases.Principales;
 import Interfaces.Zonas;
 
 public class MisilObjetivo {
-    private final int idMisil;
+    private final int ID_MISIL;
     private Zonas objetivo;
     private int tiempoImpacto;
-    private final int tiempoAparicion;
+    private final int TIEMPO_APARICION;
     private int prioridad;
     private boolean estado = false; //cambiar a enum
 
     public MisilObjetivo(Zonas objetivo, int tiempoImpacto, int idMisil, int tiempoAparicion) {
         this.objetivo = objetivo;
         this.tiempoImpacto = tiempoImpacto;
-        this.idMisil = idMisil;
-        this.tiempoAparicion = tiempoAparicion;
+        this.ID_MISIL = idMisil;
+        this.TIEMPO_APARICION = tiempoAparicion;
     }
 
     public int GetIdMisil() {
-        return this.idMisil;
+        return this.ID_MISIL;
     }
 
     public boolean GetEstado() {return this.estado;}
@@ -31,7 +31,7 @@ public class MisilObjetivo {
     }
 
     public int GetTiempoApariciion() {
-        return this.tiempoAparicion;
+        return this.TIEMPO_APARICION;
     }
 
     public void setEstado(boolean estado) {

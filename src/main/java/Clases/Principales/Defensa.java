@@ -7,13 +7,13 @@ import java.util.concurrent.Semaphore;
 public class Defensa implements Runnable {
 
     public int cantidadInterceptados = 0;
-    public final int idDefensa;
+    public final int ID_DEFENSA;
     private Queue<MisilObjetivo> misilesInterseptar;
     private Semaphore defensasDisponibles;
     private volatile boolean activa = true; // Para poder detener el hilo
 
     public Defensa(int idDefensa, Semaphore defensasDisponibles) {
-        this.idDefensa = idDefensa;
+        this.ID_DEFENSA = idDefensa;
         this.misilesInterseptar = new LinkedList<>();
         this.defensasDisponibles = defensasDisponibles;
     }
