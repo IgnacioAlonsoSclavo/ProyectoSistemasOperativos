@@ -1,33 +1,32 @@
 package Clases.Funcionamiento;
 
+import Clases.Principales.Defensa;
 import Clases.Principales.MisilObjetivo;
 
-/*
-Esta clase se encarga de ver cuales son los niveles de prioridad de un misil.
-Solo se debe implementar segun la Estrategia 2
-Se puede calcular de dos maneras.
-Segun criticidad de zona sobre tiempo.
-Segun tiempo de recarga.
-Si tiempo de recarga es menor al tiempo de imapacto, y existe otro misil el cual no esta siendo
-interceptado, entonces atacara a ese misil
+import java.util.LinkedList;
+import java.util.concurrent.Semaphore;
 
-Creo que necesitamos una lista ordenada en funcion de los tiempos de impacto
- */
+
 public class CalculadorPrioridad {
 
-    public static double Estrategia1(MisilObjetivo misil) {
-        Integer prioridad = misil.getObjetivo().GetCriticidad()/misil.GetTiempoImpacto(); //Criticidad/Tiempo
-        return prioridad;
+    private LinkedList<MisilObjetivo> amenazasPendientes;
+    private Semaphore defensasDisponibles;
+
+    public CalculadorPrioridad(LinkedList<MisilObjetivo> amenazasPendientes, int cantidadDefensas) {
+        this.amenazasPendientes = amenazasPendientes;
+        this.defensasDisponibles = new Semaphore(cantidadDefensas);
     }
 
-    //3 simula el tiempo de recarga
-    public static Integer Estrategia2(MisilObjetivo misil, Amenazas amenaza) {
-        if(3 < misil.GetTiempoImpacto()){
-            if(!amenaza.getAmenazasPendientes().isEmpty()){
+    public double calcular(MisilObjetivo misil) {
+        EstrategiaPrioridad estrategia = seleccionarEstrategia();
+        return estrategia.calcular(misil);
+    }
 
-            }
+    private EstrategiaPrioridad seleccionarEstrategia() {
+        if (defensasDisponibles.availablePermits() >= amenazasPendientes.size()) {
+            return new Estrategia1(amenazasPendientes, defensasDisponibles);
+        } else {
+            return new Estrategia2(amenazasPendientes, defensasDisponibles);
         }
-        Integer prioridad = misil.GetTiempoImpacto(); //Tiempo de recarga menor al tiempo de impacto
-        return prioridad;
     }
 }

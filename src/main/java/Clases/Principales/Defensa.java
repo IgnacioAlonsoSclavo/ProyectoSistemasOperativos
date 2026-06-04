@@ -1,26 +1,65 @@
 package Clases.Principales;
 
-import Clases.Enum;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.concurrent.Semaphore;
 
-public class Defensa {//Hilo defensa
-    public  Integer cantidadInterceptados = 0;
-    public int idDefensa;
-    public Clases.Enum.EstadoDefensa estado;// true si esta disponible, false si esta interceptando un misil
+public class Defensa implements Runnable {
 
-    public Defensa(int idDefensa) {
+    public int cantidadInterceptados = 0;
+    public final int idDefensa;
+    private Queue<MisilObjetivo> misilesInterseptar;
+    private Semaphore defensasDisponibles;
+    private volatile boolean activa = true; // Para poder detener el hilo
+
+    public Defensa(int idDefensa, Semaphore defensasDisponibles) {
         this.idDefensa = idDefensa;
-        this.estado = Enum.EstadoDefensa.DISPONIBLE;
+        this.misilesInterseptar = new LinkedList<>();
+        this.defensasDisponibles = defensasDisponibles;
     }
 
-    /*public static void InterceptarMisil(MisilObjetivo misil) {
-        try {
-            if(estado == Enum.EstadoDefensa.DISPONIBLE) {
-                //Hacemos la logica de interceptar
+    public synchronized void encolarMisil(MisilObjetivo misil) {
+        misilesInterseptar.add(misil);
+        notify(); // Despierta el hilo si estaba esperando
+    }
+
+    public void detener() {
+        activa = false;
+    }
+
+    @Override
+    public void run() {
+        while (activa) {
+            MisilObjetivo misil = null;
+
+            synchronized (this) {
+                while (misilesInterseptar.isEmpty() && activa) {
+                    try {
+                        wait(); // Espera hasta que haya un misil
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+                if (!misilesInterseptar.isEmpty()) {
+                    misil = misilesInterseptar.poll();
+                }
             }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } finally {
+
+            if (misil != null) {
+                interseptar(misil);
+            }
         }
     }
-     */
+
+    private void interseptar(MisilObjetivo misil) {
+        try {
+            defensasDisponibles.acquire(); // Ocupa el permiso mientras intercepta
+            misil.setEstado(false);
+            cantidadInterceptados++;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            defensasDisponibles.release(); // Libera el permiso al terminar
+        }
+    }
 }

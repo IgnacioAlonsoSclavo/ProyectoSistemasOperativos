@@ -2,7 +2,8 @@ package Clases.Principales;
 import Interfaces.Zonas;
 
 
-public class Hospital extends Zonas{
+public class
+Hospital extends Zonas{
     private String nombreZona;
     private Integer criticidad;
     private Boolean impactado;
