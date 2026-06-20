@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Defensa Antimisiles</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0f1e;
+    --bg2: #111827;
+    --bg3: #1f2937;
+    --border: #374151;
+    --blue: #3b82f6;
+    --blue-light: #60a5fa;
+    --green: #10b981;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --purple: #8b5cf6;
+    --text: #f3f4f6;
+    --text-muted: #9ca3af;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; line-height: 1.6; }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #0a0f1e 0%, #1a1f3e 50%, #0d1b2a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 60px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.15) 0%, transparent 70%);
+  }
+  header h1 { font-size: 2.8rem; font-weight: 700; color: #fff; position: relative; }
+  header h1 span { color: var(--blue-light); }
+  header p { color: var(--text-muted); font-size: 1.1rem; margin-top: 12px; position: relative; }
+  .badge { display: inline-block; background: rgba(59,130,246,0.2); border: 1px solid var(--blue); color: var(--blue-light); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; margin: 4px; }
+
+  /* NAV */
+  nav {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    display: flex;
+    gap: 0;
+    position: sticky; top: 0; z-index: 100;
+  }
+  nav a {
+    color: var(--text-muted); text-decoration: none; padding: 16px 20px;
+    font-size: 0.9rem; border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  nav a:hover { color: var(--text); border-bottom-color: var(--blue); }
+
+  /* SECTIONS */
+  section { padding: 60px 40px; border-bottom: 1px solid var(--border); max-width: 1200px; margin: 0 auto; }
+  h2 { font-size: 1.8rem; font-weight: 700; margin-bottom: 8px; }
+  h2 .icon { font-size: 1.4rem; margin-right: 10px; }
+  .section-desc { color: var(--text-muted); margin-bottom: 32px; font-size: 1rem; }
+  h3 { font-size: 1.15rem; font-weight: 600; margin-bottom: 12px; color: var(--blue-light); }
+
+  /* FLOW */
+  .flow {
+    display: flex; align-items: center; gap: 0;
+    overflow-x: auto; padding: 20px 0;
+    flex-wrap: wrap; gap: 8px;
+  }
+  .flow-item {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 20px; text-align: center;
+    min-width: 130px; flex-shrink: 0;
+  }
+  .flow-item .fi-icon { font-size: 1.8rem; display: block; margin-bottom: 6px; }
+  .flow-item .fi-name { font-size: 0.8rem; font-weight: 600; color: var(--text); }
+  .flow-item .fi-desc { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; }
+  .flow-arrow { color: var(--blue); font-size: 1.4rem; flex-shrink: 0; }
+
+  /* CARDS */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+  .card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--blue); }
+  .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .card-icon { font-size: 1.6rem; }
+  .card-title { font-size: 1rem; font-weight: 700; }
+  .card-file { font-size: 0.75rem; color: var(--blue-light); font-family: monospace; }
+  .card p { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 8px; }
+  .tag { display: inline-block; background: rgba(59,130,246,0.15); color: var(--blue-light); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin: 2px; font-family: monospace; }
+  .tag.green { background: rgba(16,185,129,0.15); color: #34d399; }
+  .tag.purple { background: rgba(139,92,246,0.15); color: #a78bfa; }
+  .tag.yellow { background: rgba(245,158,11,0.15); color: #fbbf24; }
+
+  /* STRATEGY SELECTOR */
+  .strategy-selector {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 28px; margin-bottom: 32px;
+  }
+  .slider-row { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+  .slider-row label { min-width: 220px; font-size: 0.9rem; color: var(--text-muted); }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--blue); }
+  .slider-val { min-width: 32px; text-align: center; font-weight: 700; color: var(--blue-light); }
+  .formula-box {
+    background: var(--bg3); border-radius: 8px; padding: 20px;
+    border-left: 3px solid var(--blue); margin-top: 20px;
+  }
+  .formula-box .result {
+    font-size: 1.4rem; font-weight: 700; text-align: center;
+    padding: 16px; border-radius: 8px; margin-top: 12px;
+  }
+  .result.e1 { background: rgba(59,130,246,0.15); color: var(--blue-light); border: 1px solid var(--blue); }
+  .result.e2 { background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid var(--purple); }
+
+  /* PRIORITY CALCULATOR */
+  .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 768px) { .calc-grid { grid-template-columns: 1fr; } }
+  .calc-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .input-row { display: flex; gap: 10px; margin-bottom: 16px; align-items: flex-end; }
+  .input-group { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .input-group label { font-size: 0.78rem; color: var(--text-muted); }
+  .input-group input, .input-group select {
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); border-radius: 6px; padding: 8px 10px;
+    font-size: 0.9rem; width: 100%;
+  }
+  .input-group input:focus, .input-group select:focus { outline: none; border-color: var(--blue); }
+  button {
+    background: var(--blue); color: #fff; border: none;
+    border-radius: 6px; padding: 9px 18px; cursor: pointer;
+    font-size: 0.88rem; font-weight: 600; transition: opacity 0.2s;
+    white-space: nowrap;
+  }
+  button:hover { opacity: 0.85; }
+  button.secondary { background: var(--bg3); border: 1px solid var(--border); color: var(--text-muted); }
+  button.danger { background: rgba(239,68,68,0.2); border: 1px solid var(--red); color: #fca5a5; }
+
+  .missile-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 16px; }
+  .missile-table th { background: var(--bg3); color: var(--text-muted); padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+  .missile-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .missile-table tr.winner td { background: rgba(16,185,129,0.1); }
+  .missile-table tr.winner td:first-child { border-left: 3px solid var(--green); }
+  .priority-val { font-family: monospace; font-weight: 700; }
+  .priority-val.high { color: var(--green); }
+  .priority-val.mid { color: var(--yellow); }
+  .priority-val.low { color: var(--text-muted); }
+  .priority-val.max { color: var(--red); }
+
+  .tick-control { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; background: var(--bg3); padding: 12px 16px; border-radius: 8px; }
+  .tick-control label { font-size: 0.85rem; color: var(--text-muted); }
+  .tick-display { font-size: 1.1rem; font-weight: 700; color: var(--yellow); min-width: 40px; }
+
+  /* AGING CHART */
+  .aging-container { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .aging-inputs { display: flex; gap: 16px; margin-bottom: 20px; align-items: flex-end; flex-wrap: wrap; }
+  canvas { border-radius: 8px; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-muted); }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+  /* SIMULATION */
+  .sim-container { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .sim-toolbar {
+    background: var(--bg3); padding: 14px 20px;
+    display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid var(--border); flex-wrap: wrap;
+  }
+  .sim-toolbar span { font-size: 0.85rem; color: var(--text-muted); }
+  .sim-toolbar strong { color: var(--text); }
+  .sim-canvas-wrap { padding: 20px; }
+  #simCanvas { display: block; width: 100%; border-radius: 8px; background: #080d1a; }
+  .sim-log {
+    background: #080d1a; border-top: 1px solid var(--border);
+    padding: 12px 20px; height: 140px; overflow-y: auto;
+    font-family: monospace; font-size: 0.78rem;
+  }
+  .log-line { padding: 2px 0; }
+  .log-line.info { color: var(--blue-light); }
+  .log-line.success { color: var(--green); }
+  .log-line.danger { color: var(--red); }
+  .log-line.warn { color: var(--yellow); }
+  .log-line.muted { color: var(--text-muted); }
+
+  /* MISC */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+  .info-box { background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.3); border-radius: 8px; padding: 16px; font-size: 0.88rem; color: var(--text-muted); margin-top: 16px; }
+  .info-box strong { color: var(--blue-light); }
+  code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.85em; color: var(--yellow); }
+  .formula { font-family: monospace; font-size: 1.05rem; color: var(--yellow); background: var(--bg3); padding: 10px 16px; border-radius: 6px; display: block; margin: 8px 0; text-align: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sistema de Defensa <span>Antimisiles</span></h1>
+  <p>Simulación concurrente con estrategias de prioridad adaptativas</p>
+  <br>
+  <span class="badge">Java Threads</span>
+  <span class="badge">Semaphores</span>
+  <span class="badge">Wait/Notify</span>
+  <span class="badge">Priority Scheduling</span>
+  <span class="badge">Aging</span>
+</header>
+
+<nav>
+  <a href="#flujo">Flujo</a>
+  <a href="#componentes">Componentes</a>
+  <a href="#estrategias">Estrategias</a>
+  <a href="#calculadora">Calculadora</a>
+  <a href="#aging">Aging</a>
+  <a href="#simulacion">Simulación</a>
+</nav>
+
+<!-- FLUJO GENERAL -->
+<section id="flujo">
+  <h2><span class="icon">🔄</span>Flujo General</h2>
+  <p class="section-desc">Cómo interactúan los componentes del sistema en tiempo de ejecución.</p>
+
+  <div class="flow">
+    <div class="flow-item">
+      <span class="fi-icon">📄</span>
+      <div class="fi-name">misiles.csv</div>
+      <div class="fi-desc">id, objetivo<br>tiempoImpacto<br>tiempoAparicion</div>
+    </div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-item">
+      <span class="fi-icon">🏗️</span>
+      <div class="fi-name">App.java</div>
+      <div class="fi-desc">Crea zonas<br>Carga CSV<br>Inicia hilos</div>
+    </div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-item" style="border-color: var(--blue);">
+      <span class="fi-icon">⚙️</span>
+      <div class="fi-name">GestionSistema</div>
+      <div class="fi-desc">Hilo daemon<br>tick cada 50ms<br>Dispatch c/100ms</div>
+    </div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-item" style="border-color: var(--purple);">
+      <span class="fi-icon">🧠</span>
+      <div class="fi-name">CalculadorPrioridad</div>
+      <div class="fi-desc">Selecciona<br>E1 o E2<br>según carga</div>
+    </div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-item" style="border-color: var(--green);">
+      <span class="fi-icon">🛡️</span>
+      <div class="fi-name">Defensa (×N)</div>
+      <div class="fi-desc">Cola ArrayDeque<br>Semáforo<br>Recarga: 3 ticks</div>
+    </div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-item">
+      <span class="fi-icon">📊</span>
+      <div class="fi-name">Log Final</div>
+      <div class="fi-desc">Estado zonas<br>Misiles interceptados<br>por defensa</div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <strong>Tick del sistema:</strong> GestionSistema corre en un hilo daemon que cada <strong>50ms</strong> decrementa los tiempos de impacto y mueve misiles de "futuros" a "pendientes". Cada <strong>2 ticks (100ms)</strong> ejecuta el dispatch: elige el misil de mayor prioridad y lo encola en la mejor defensa disponible.
+  </div>
+</section>
+
+<!-- COMPONENTES -->
+<section id="componentes">
+  <h2><span class="icon">📦</span>Componentes</h2>
+  <p class="section-desc">Cada clase y su responsabilidad en el sistema.</p>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🏗️</span>
+        <div><div class="card-title">App</div><div class="card-file">App.java</div></div>
+      </div>
+      <p>Punto de entrada. Crea las zonas del sistema, carga el CSV, y arranca todos los hilos.</p>
+      <p>Acepta argumentos: <code>java App &lt;N_defensas&gt; &lt;archivo.csv&gt;</code></p>
+      <div><span class="tag">main thread</span> <span class="tag green">join()</span> <span class="tag">log final</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">⚙️</span>
+        <div><div class="card-title">GestionSistema</div><div class="card-file">GestionSistema.java</div></div>
+      </div>
+      <p>Hilo daemon. Gestiona el tiempo del sistema tick a tick.</p>
+      <p>Responsabilidades: aparición de misiles, decremento de tiempos, dispatch cada 2 ticks, y detención de defensas al terminar.</p>
+      <div><span class="tag purple">daemon thread</span> <span class="tag">50ms/tick</span> <span class="tag">dispatch</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🧠</span>
+        <div><div class="card-title">CalculadorPrioridad</div><div class="card-file">CalculadorPrioridad.java</div></div>
+      </div>
+      <p>Selecciona la estrategia activa comparando defensas disponibles vs misiles pendientes.</p>
+      <code style="display:block; margin-top:8px;">2 × libres ≥ pendientes → E1<br>sino → E2</code>
+      <div style="margin-top:8px;"><span class="tag">semáforo</span> <span class="tag yellow">decisión dinámica</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">📘</span>
+        <div><div class="card-title">Estrategia1</div><div class="card-file">Estrategia1.java</div></div>
+      </div>
+      <p>Se usa cuando hay poca carga. Prioriza el misil más urgente (menor tiempo de impacto).</p>
+      <p>Cola máxima por defensa: <strong style="color:var(--blue-light)">2 misiles</strong></p>
+      <div><span class="tag green">poca carga</span> <span class="tag">urgencia</span> <span class="tag">maxCola=2</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">📙</span>
+        <div><div class="card-title">Estrategia2</div><div class="card-file">Estrategia2.java</div></div>
+      </div>
+      <p>Se usa en saturación. Balancea urgencia y criticidad del objetivo. Incluye <strong>aging</strong> para evitar inanición.</p>
+      <p>Cola máxima por defensa: <strong style="color:var(--purple)">1 misil</strong></p>
+      <div><span class="tag purple">saturación</span> <span class="tag">criticidad</span> <span class="tag yellow">aging</span> <span class="tag">maxCola=1</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🛡️</span>
+        <div><div class="card-title">Defensa</div><div class="card-file">Defensa.java</div></div>
+      </div>
+      <p>Un hilo por defensa. Espera misiles con <code>wait()</code>, intercepta adquiriendo el semáforo compartido, y espera el tiempo de recarga antes de liberar.</p>
+      <div><span class="tag">Runnable</span> <span class="tag green">ArrayDeque</span> <span class="tag">Semaphore</span> <span class="tag purple">wait/notify</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🏥</span>
+        <div><div class="card-title">Hospital / Zonas</div><div class="card-file">Hospital.java · Zonas.java</div></div>
+      </div>
+      <p><code>Zonas</code> es abstracta: tiene nombre, criticidad, tipo (<code>TipoZona</code>) e impactado.</p>
+      <p><code>Hospital</code> es CIVIL con criticidad 4. Cada subclase define su propio tipo y criticidad.</p>
+      <div><span class="tag">CIVIL</span> <span class="tag yellow">criticidad 4</span> <span class="tag">TipoZona enum</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🚀</span>
+        <div><div class="card-title">MisilObjetivo</div><div class="card-file">MisilObjetivo.java</div></div>
+      </div>
+      <p>Representa un misil. Tiene zona objetivo, tiempo al impacto, tiempo de aparición y <strong>ticksEspera</strong> para el aging.</p>
+      <p>Cuando <code>tiempoImpacto</code> llega a 0, llama <code>SetImpactado()</code> en la zona.</p>
+      <div><span class="tag">volatile estado</span> <span class="tag yellow">ticksEspera</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ESTRATEGIAS -->
+<section id="estrategias">
+  <h2><span class="icon">🧮</span>Selección de Estrategia</h2>
+  <p class="section-desc">El <code>CalculadorPrioridad</code> elige la estrategia en cada dispatch según el estado actual del sistema.</p>
+
+  <div class="strategy-selector">
+    <div class="slider-row">
+      <label>Defensas disponibles (permisos libres en semáforo)</label>
+      <input type="range" id="sDefensas" min="0" max="10" value="3" oninput="updateStrategy()">
+      <span class="slider-val" id="sDefensasVal">3</span>
+    </div>
+    <div class="slider-row">
+      <label>Misiles pendientes (en amenazasPendientes)</label>
+      <input type="range" id="sMisiles" min="0" max="20" value="4" oninput="updateStrategy()">
+      <span class="slider-val" id="sMisilesVal">4</span>
+    </div>
+
+    <div class="formula-box">
+      <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:8px;">Condición de selección:</div>
+      <span class="formula" id="stratFormula">2 × 3 = 6  ≥  4  → Estrategia 1</span>
+      <div class="result e1" id="stratResult">✓ Estrategia 1 — Poca carga, prioriza urgencia</div>
+    </div>
+
+    <div class="two-col" style="margin-top:24px;">
+      <div style="background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.3); border-radius:10px; padding:20px;">
+        <h3 style="color:var(--blue-light);">Estrategia 1 — Urgencia</h3>
+        <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:12px;">Se activa cuando hay suficientes defensas. Prioriza el misil que va a impactar primero.</p>
+        <span class="formula">Si tiempoImpacto ≤ 3: ∞<br>Si no: 1 / tiempoImpacto</span>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-top:8px;">Mayor valor = mayor prioridad. Un misil con tiempo=1 vale 1.0, uno con tiempo=10 vale 0.1.</p>
+        <div style="margin-top:10px;"><span class="tag">maxCola = 2</span> <span class="tag green">rango: (0, 1] ∪ {∞}</span></div>
+      </div>
+      <div style="background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.3); border-radius:10px; padding:20px;">
+        <h3 style="color:#a78bfa;">Estrategia 2 — Criticidad + Aging</h3>
+        <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:12px;">Se activa en saturación. Balancea lo crítico del objetivo con la urgencia. El aging evita inanición.</p>
+        <span class="formula">(criticidad + ticks × 0.5) / (tiempoImpacto × maxCrit)</span>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-top:8px;">Con el tiempo, misiles postergados suben su prioridad aunque tengan baja criticidad.</p>
+        <div style="margin-top:10px;"><span class="tag">maxCola = 1</span> <span class="tag yellow">aging: +0.5/tick</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CALCULADORA -->
+<section id="calculadora">
+  <h2><span class="icon">🔢</span>Calculadora de Prioridad</h2>
+  <p class="section-desc">Agregá misiles y calculá qué misil elegiría cada estrategia. El ganador se resalta en verde.</p>
+
+  <div class="calc-grid">
+    <!-- E1 -->
+    <div class="calc-panel" style="border-color: rgba(59,130,246,0.4);">
+      <h3>Estrategia 1 — Urgencia</h3>
+      <div class="tick-control">
+        <label>TIEMPO_RECARGA:</label>
+        <span class="tick-display">3</span>
+        <label style="margin-left:8px; color:var(--text-muted); font-size:0.78rem;">(ticks fijos)</label>
+      </div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>ID Misil</label>
+          <input type="number" id="e1-id" value="1" min="1" style="width:70px;">
+        </div>
+        <div class="input-group">
+          <label>TiempoImpacto</label>
+          <input type="number" id="e1-tiempo" value="5" min="1" max="50">
+        </div>
+        <div class="input-group">
+          <label>Criticidad</label>
+          <select id="e1-crit">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4" selected>4</option>
+          </select>
+        </div>
+        <button onclick="addMisil('e1')">+ Agregar</button>
+      </div>
+      <table class="missile-table" id="e1-table">
+        <thead><tr><th>ID</th><th>Tiempo</th><th>Crit</th><th>Prioridad</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <button class="secondary" style="margin-top:12px; width:100%;" onclick="calcularE1()">Calcular</button>
+    </div>
+
+    <!-- E2 -->
+    <div class="calc-panel" style="border-color: rgba(139,92,246,0.4);">
+      <h3>Estrategia 2 — Criticidad + Aging</h3>
+      <div class="tick-control">
+        <label>Ticks de espera del misil:</label>
+        <input type="range" min="0" max="50" value="0" id="e2-ticks" oninput="document.getElementById('e2-ticks-val').textContent=this.value; calcularE2()">
+        <span class="tick-display" id="e2-ticks-val">0</span>
+      </div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>ID Misil</label>
+          <input type="number" id="e2-id" value="1" min="1" style="width:70px;">
+        </div>
+        <div class="input-group">
+          <label>TiempoImpacto</label>
+          <input type="number" id="e2-tiempo" value="10" min="1" max="50">
+        </div>
+        <div class="input-group">
+          <label>Criticidad</label>
+          <select id="e2-crit">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4" selected>4</option>
+          </select>
+        </div>
+        <button onclick="addMisil('e2')">+ Agregar</button>
+      </div>
+      <table class="missile-table" id="e2-table">
+        <thead><tr><th>ID</th><th>Tiempo</th><th>Crit</th><th>TicksEsp</th><th>Prioridad</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <button class="secondary" style="margin-top:12px; width:100%;" onclick="calcularE2()">Calcular</button>
+    </div>
+  </div>
+
+  <div class="info-box" style="margin-top:0;">
+    <strong>Desempate:</strong> Si dos misiles tienen el mismo valor de prioridad calculada, gana el de mayor <strong>criticidad original</strong>. Esto aplica a ambas estrategias y evita que el aging de un misil de baja criticidad desplace a uno de alta criticidad real cuando empatan.
+  </div>
+</section>
+
+<!-- AGING -->
+<section id="aging">
+  <h2><span class="icon">📈</span>Simulación de Aging</h2>
+  <p class="section-desc">Visualizá cómo la prioridad de un misil en Estrategia 2 crece con el tiempo, y cómo eventualmente supera a misiles más críticos que llevan menos tiempo esperando.</p>
+
+  <div class="aging-container">
+    <div class="aging-inputs">
+      <div class="input-group" style="max-width:120px;">
+        <label>Criticidad</label>
+        <select id="ag-crit" onchange="drawAgingChart()">
+          <option value="1">1 — Baja</option>
+          <option value="2">2 — Media</option>
+          <option value="3">3 — Alta</option>
+          <option value="4" selected>4 — Máxima</option>
+        </select>
+      </div>
+      <div class="input-group" style="max-width:140px;">
+        <label>TiempoImpacto</label>
+        <input type="number" id="ag-tiempo" value="15" min="1" max="50" oninput="drawAgingChart()">
+      </div>
+      <div class="input-group" style="max-width:140px;">
+        <label>maxCriticidad</label>
+        <input type="number" id="ag-maxcrit" value="4" min="1" max="4" oninput="drawAgingChart()">
+      </div>
+      <button onclick="addAgingLine()">+ Agregar misil al gráfico</button>
+      <button class="danger" onclick="clearAgingLines()">Limpiar</button>
+    </div>
+    <canvas id="agingCanvas" height="300"></canvas>
+    <div class="legend" id="agingLegend"></div>
+    <div class="info-box" style="margin-top:16px;">
+      <strong>Factor de aging: 0.5 por tick.</strong> La línea punteada muestra la prioridad <em>sin aging</em>. La línea sólida muestra cómo crece la prioridad efectiva. Agregá varios misiles para ver cuándo uno de menor criticidad alcanza al de mayor criticidad.
+    </div>
+  </div>
+</section>
+
+<!-- SIMULACIÓN EN VIVO -->
+<section id="simulacion">
+  <h2><span class="icon">🎮</span>Simulación en Vivo</h2>
+  <p class="section-desc">Simulación completa del sistema usando los misiles del CSV. Los misiles aparecen en su tiempo de aparición, las defensas los interceptan según la estrategia activa.</p>
+
+  <div class="sim-container">
+    <div class="sim-toolbar">
+      <button id="btnPlay" onclick="toggleSim()">▶ Iniciar</button>
+      <button class="secondary" onclick="resetSim()">↺ Reiniciar</button>
+      <span>Tick: <strong id="simTick">0</strong></span>
+      <span>Estrategia activa: <strong id="simStrategy" style="color:var(--blue-light)">—</strong></span>
+      <span>Pendientes: <strong id="simPending">0</strong></span>
+      <span>Interceptados: <strong id="simIntercepted">0</strong></span>
+      <span>Impactados: <strong id="simImpacted" style="color:var(--red)">0</strong></span>
+    </div>
+    <div class="sim-canvas-wrap">
+      <canvas id="simCanvas" height="380"></canvas>
+    </div>
+    <div class="sim-log" id="simLog"></div>
+  </div>
+</section>
+
+<script>
+// ============================================================
+// STRATEGY SELECTOR
+// ============================================================
+function updateStrategy() {
+  const def = +document.getElementById('sDefensas').value;
+  const mis = +document.getElementById('sMisiles').value;
+  document.getElementById('sDefensasVal').textContent = def;
+  document.getElementById('sMisilesVal').textContent = mis;
+
+  const cond = 2 * def >= mis;
+  const lhs = 2 * def;
+  document.getElementById('stratFormula').textContent =
+    `2 × ${def} = ${lhs}  ${cond ? '≥' : '<'}  ${mis}  →  Estrategia ${cond ? 1 : 2}`;
+
+  const res = document.getElementById('stratResult');
+  if (cond) {
+    res.className = 'result e1';
+    res.textContent = '✓ Estrategia 1 — Poca carga, prioriza urgencia (maxCola=2)';
+  } else {
+    res.className = 'result e2';
+    res.textContent = '✓ Estrategia 2 — Saturación, balancea criticidad y urgencia (maxCola=1)';
+  }
+}
+updateStrategy();
+
+// ============================================================
+// PRIORITY CALCULATOR
+// ============================================================
+const TIEMPO_RECARGA = 3;
+const FACTOR_AGING = 0.5;
+
+let e1Misiles = [];
+let e2Misiles = [];
+
+function addMisil(strat) {
+  const id = +document.getElementById(`${strat}-id`).value;
+  const tiempo = +document.getElementById(`${strat}-tiempo`).value;
+  const crit = +document.getElementById(`${strat}-crit`).value;
+  if (!id || !tiempo) return;
+
+  if (strat === 'e1') {
+    e1Misiles.push({ id, tiempo, crit });
+    document.getElementById('e1-id').value = e1Misiles.length + 1;
+    calcularE1();
+  } else {
+    const ticks = +document.getElementById('e2-ticks').value;
+    e2Misiles.push({ id, tiempo, crit, ticks });
+    document.getElementById('e2-id').value = e2Misiles.length + 1;
+    calcularE2();
+  }
+}
+
+function calcPrioE1(misil, lista) {
+  const hayTiempo = TIEMPO_RECARGA < misil.tiempo && lista.length > 0;
+  if (!hayTiempo) return Infinity;
+  return 1.0 / Math.max(misil.tiempo, 1);
+}
+
+function calcPrioE2(misil, lista, ticks) {
+  const maxCrit = Math.max(...lista.map(m => m.crit));
+  const t = ticks !== undefined ? ticks : misil.ticks;
+  const critEfectiva = misil.crit + t * FACTOR_AGING;
+  const denom = misil.tiempo * maxCrit;
+  if (denom === 0) return Infinity;
+  return critEfectiva / denom;
+}
+
+function prioClass(val, max) {
+  if (val === Infinity) return 'max';
+  if (val === max) return 'high';
+  if (val > max * 0.5) return 'mid';
+  return 'low';
+}
+
+function calcularE1() {
+  const tbody = document.querySelector('#e1-table tbody');
+  tbody.innerHTML = '';
+  if (e1Misiles.length === 0) return;
+
+  const prios = e1Misiles.map(m => calcPrioE1(m, e1Misiles));
+  const maxP = Math.max(...prios.filter(p => p !== Infinity));
+  const winnerIdx = prios.reduce((best, p, i) => {
+    if (p > prios[best]) return i;
+    if (p === prios[best] && e1Misiles[i].crit > e1Misiles[best].crit) return i;
+    return best;
+  }, 0);
+
+  e1Misiles.forEach((m, i) => {
+    const p = prios[i];
+    const cls = prioClass(p, maxP);
+    const row = document.createElement('tr');
+    if (i === winnerIdx) row.className = 'winner';
+    const pStr = p === Infinity ? '∞ (URGENTE)' : p.toFixed(4);
+    row.innerHTML = `
+      <td>${i === winnerIdx ? '🎯 ' : ''}Misil ${m.id}</td>
+      <td>${m.tiempo}</td><td>${m.crit}</td>
+      <td><span class="priority-val ${i===winnerIdx?'high':cls}">${pStr}</span></td>
+      <td><button class="danger" style="padding:3px 8px;font-size:0.75rem;" onclick="removeMisil('e1',${i})">✕</button></td>`;
+    tbody.appendChild(row);
+  });
+}
+
+function calcularE2() {
+  const ticks = +document.getElementById('e2-ticks').value;
+  const tbody = document.querySelector('#e2-table tbody');
+  tbody.innerHTML = '';
+  if (e2Misiles.length === 0) return;
+
+  const prios = e2Misiles.map(m => calcPrioE2(m, e2Misiles, ticks));
+  const maxP = Math.max(...prios.filter(p => p !== Infinity));
+  const winnerIdx = prios.reduce((best, p, i) => {
+    if (p > prios[best]) return i;
+    if (p === prios[best] && e2Misiles[i].crit > e2Misiles[best].crit) return i;
+    return best;
+  }, 0);
+
+  e2Misiles.forEach((m, i) => {
+    const p = prios[i];
+    const cls = prioClass(p, maxP);
+    const row = document.createElement('tr');
+    if (i === winnerIdx) row.className = 'winner';
+    const pStr = p === Infinity ? '∞' : p.toFixed(4);
+    row.innerHTML = `
+      <td>${i === winnerIdx ? '🎯 ' : ''}Misil ${m.id}</td>
+      <td>${m.tiempo}</td><td>${m.crit}</td><td>${ticks}</td>
+      <td><span class="priority-val ${i===winnerIdx?'high':cls}">${pStr}</span></td>
+      <td><button class="danger" style="padding:3px 8px;font-size:0.75rem;" onclick="removeMisil('e2',${i})">✕</button></td>`;
+    tbody.appendChild(row);
+  });
+}
+
+function removeMisil(strat, idx) {
+  if (strat === 'e1') { e1Misiles.splice(idx, 1); calcularE1(); }
+  else { e2Misiles.splice(idx, 1); calcularE2(); }
+}
+
+// ============================================================
+// AGING CHART
+// ============================================================
+const AGING_COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6'];
+let agingLines = [];
+let agingColorIdx = 0;
+
+function drawAgingChart() {
+  const canvas = document.getElementById('agingCanvas');
+  canvas.width = canvas.offsetWidth;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const PAD = { top: 20, right: 20, bottom: 40, left: 60 };
+  const cw = W - PAD.left - PAD.right;
+  const ch = H - PAD.top - PAD.bottom;
+  const maxTicks = 60;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#080d1a';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = '#1f2937';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 5; i++) {
+    const y = PAD.top + ch * (1 - i / 5);
+    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + cw, y); ctx.stroke();
+    ctx.fillStyle = '#6b7280'; ctx.font = '11px monospace'; ctx.textAlign = 'right';
+    ctx.fillText((i * 0.4).toFixed(1), PAD.left - 6, y + 4);
+  }
+  for (let i = 0; i <= 6; i++) {
+    const x = PAD.left + cw * i / 6;
+    ctx.beginPath(); ctx.moveTo(x, PAD.top); ctx.lineTo(x, PAD.top + ch); ctx.stroke();
+    ctx.fillStyle = '#6b7280'; ctx.font = '11px monospace'; ctx.textAlign = 'center';
+    ctx.fillText(Math.round(i * maxTicks / 6), x, PAD.top + ch + 18);
+  }
+
+  // Axes labels
+  ctx.fillStyle = '#9ca3af'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('Ticks de espera', PAD.left + cw / 2, H - 5);
+  ctx.save(); ctx.translate(14, PAD.top + ch / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Prioridad', 0, 0); ctx.restore();
+
+  const maxY = 2.0;
+
+  function toX(t) { return PAD.left + (t / maxTicks) * cw; }
+  function toY(v) { return PAD.top + ch * (1 - Math.min(v, maxY) / maxY); }
+
+  // Preview line (current inputs)
+  const prevCrit = +document.getElementById('ag-crit').value;
+  const prevTiempo = +document.getElementById('ag-tiempo').value;
+  const prevMaxCrit = +document.getElementById('ag-maxcrit').value || 4;
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  for (let t = 0; t <= maxTicks; t++) {
+    const critEf = prevCrit + t * FACTOR_AGING;
+    const denom = prevTiempo * prevMaxCrit;
+    const p = denom === 0 ? maxY : critEf / denom;
+    const x = toX(t), y = toY(p);
+    t === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke(); ctx.setLineDash([]);
+
+  // Saved lines
+  agingLines.forEach((line, idx) => {
+    ctx.strokeStyle = line.color;
+    ctx.lineWidth = 2.5;
+
+    // Sin aging (punteado)
+    ctx.setLineDash([4, 4]); ctx.globalAlpha = 0.4;
+    ctx.beginPath();
+    const p0 = line.crit / (line.tiempo * line.maxCrit);
+    ctx.moveTo(toX(0), toY(p0)); ctx.lineTo(toX(maxTicks), toY(p0));
+    ctx.stroke();
+
+    // Con aging (sólido)
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.beginPath();
+    for (let t = 0; t <= maxTicks; t++) {
+      const critEf = line.crit + t * FACTOR_AGING;
+      const denom = line.tiempo * line.maxCrit;
+      const p = denom === 0 ? maxY : critEf / denom;
+      const x = toX(t), y = toY(p);
+      t === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Label
+    const critEfEnd = line.crit + maxTicks * FACTOR_AGING;
+    const pEnd = Math.min(critEfEnd / (line.tiempo * line.maxCrit), maxY);
+    ctx.fillStyle = line.color; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText(`M${line.id}`, toX(maxTicks) - 20, toY(pEnd) - 4);
+  });
+
+  // Update legend
+  const leg = document.getElementById('agingLegend');
+  leg.innerHTML = agingLines.map(l =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${l.color}"></div>Misil ${l.id} — crit=${l.crit}, tiempo=${l.tiempo}, maxCrit=${l.maxCrit}</div>`
+  ).join('');
+}
+
+function addAgingLine() {
+  const crit = +document.getElementById('ag-crit').value;
+  const tiempo = +document.getElementById('ag-tiempo').value;
+  const maxCrit = +document.getElementById('ag-maxcrit').value || 4;
+  const id = agingLines.length + 1;
+  agingLines.push({ id, crit, tiempo, maxCrit, color: AGING_COLORS[agingColorIdx % AGING_COLORS.length] });
+  agingColorIdx++;
+  drawAgingChart();
+}
+
+function clearAgingLines() {
+  agingLines = []; agingColorIdx = 0;
+  drawAgingChart();
+}
+
+window.addEventListener('resize', drawAgingChart);
+setTimeout(drawAgingChart, 100);
+
+// ============================================================
+// LIVE SIMULATION
+// ============================================================
+
+// CSV data
+const CSV_MISSILES = [
+  { id: 1, zona: 'Hospital Central', tiempoImpacto: 20, tiempoAparicion: 0 },
+  { id: 2, zona: 'Hospital Norte',   tiempoImpacto: 15, tiempoAparicion: 4 },
+  { id: 3, zona: 'Hospital Central', tiempoImpacto: 10, tiempoAparicion: 8 },
+  { id: 4, zona: 'Hospital Norte',   tiempoImpacto: 8,  tiempoAparicion: 12 },
+  { id: 5, zona: 'Hospital Central', tiempoImpacto: 30, tiempoAparicion: 16 },
+];
+
+const ZONAS_DEF = {
+  'Hospital Central': { criticidad: 4, tipo: 'CIVIL', impactado: false },
+  'Hospital Norte':   { criticidad: 4, tipo: 'CIVIL', impactado: false },
+};
+
+let simState = null;
+let simInterval = null;
+let simRunning = false;
+
+function createSimState() {
+  const zonas = {};
+  for (const [k, v] of Object.entries(ZONAS_DEF)) {
+    zonas[k] = { ...v, impactado: false };
+  }
+  return {
+    tick: 0,
+    futuros: CSV_MISSILES.map(m => ({
+      ...m, estado: false, ticksEspera: 0,
+      tiempoRestante: m.tiempoImpacto,
+      zona: zonas[m.zona]
+    })),
+    pendientes: [],
+    defensas: [
+      { id: 1, cola: [], ocupada: false, recargando: 0, interceptados: 0 },
+      { id: 2, cola: [], ocupada: false, recargando: 0, interceptados: 0 },
+      { id: 3, cola: [], ocupada: false, recargando: 0, interceptados: 0 },
+    ],
+    zonas,
+    interceptados: 0,
+    impactados: 0,
+    terminado: false,
+  };
+}
+
+function simCalcPrioE1(misil, lista) {
+  const hayTiempo = TIEMPO_RECARGA < misil.tiempoRestante && lista.length > 0;
+  if (!hayTiempo) return Infinity;
+  return 1.0 / Math.max(misil.tiempoRestante, 1);
+}
+
+function simCalcPrioE2(misil, lista) {
+  const maxCrit = Math.max(...lista.map(m => m.zona.criticidad));
+  const critEf = misil.zona.criticidad + misil.ticksEspera * FACTOR_AGING;
+  const denom = misil.tiempoRestante * maxCrit;
+  if (denom === 0) return Infinity;
+  return critEf / denom;
+}
+
+function simSelectStrategy(state) {
+  const libres = state.defensas.filter(d => !d.ocupada).length;
+  const pendientes = state.pendientes.length;
+  return (2 * libres >= pendientes) ? 'E1' : 'E2';
+}
+
+function simTick(state) {
+  if (state.terminado) return;
+  state.tick++;
+
+  // Mover futuros a pendientes
+  state.futuros = state.futuros.filter(m => {
+    if (m.tiempoAparicion <= state.tick) {
+      state.pendientes.push(m);
+      simLog(`Tick ${state.tick}: Misil ${m.id} aparece (objetivo: ${Object.keys(state.zonas).find(k => state.zonas[k] === m.zona)})`, 'info');
+      return false;
+    }
+    return true;
+  });
+
+  // Actualizar tiempos e interceptaciones en curso
+  state.defensas.forEach(d => {
+    if (d.recargando > 0) {
+      d.recargando--;
+      if (d.recargando === 0) {
+        d.ocupada = false;
+        simLog(`Tick ${state.tick}: Defensa ${d.id} terminó recarga`, 'muted');
+      }
+    }
+    if (!d.ocupada && d.cola.length > 0) {
+      const misil = d.cola.shift();
+      d.ocupada = true;
+      d.recargando = TIEMPO_RECARGA;
+      d.interceptados++;
+      misil.estado = true;
+      state.interceptados++;
+      const zonaNombre = Object.keys(state.zonas).find(k => state.zonas[k] === misil.zona);
+      simLog(`Tick ${state.tick}: Defensa ${d.id} interceptó Misil ${misil.id} (${zonaNombre})`, 'success');
+    }
+  });
+
+  // Decrementar tiempos e impactos
+  state.pendientes = state.pendientes.filter(m => {
+    if (m.estado) return false;
+    m.tiempoRestante--;
+    m.ticksEspera++;
+    if (m.tiempoRestante <= 0) {
+      m.zona.impactado = true;
+      state.impactados++;
+      const zonaNombre = Object.keys(state.zonas).find(k => state.zonas[k] === m.zona);
+      simLog(`Tick ${state.tick}: ¡Misil ${m.id} IMPACTÓ ${zonaNombre}!`, 'danger');
+      return false;
+    }
+    return true;
+  });
+
+  // Dispatch cada 2 ticks
+  if (state.tick % 2 === 0 && state.pendientes.length > 0) {
+    const strat = simSelectStrategy(state);
+    const calcFn = strat === 'E1' ? simCalcPrioE1 : simCalcPrioE2;
+    const maxCola = strat === 'E1' ? 2 : 1;
+
+    let best = null, bestPrio = -Infinity, bestCrit = -1;
+    for (const m of state.pendientes) {
+      const p = calcFn(m, state.pendientes);
+      if (p > bestPrio || (p === bestPrio && m.zona.criticidad > bestCrit)) {
+        best = m; bestPrio = p; bestCrit = m.zona.criticidad;
+      }
+    }
+
+    if (best) {
+      const defensa = state.defensas
+        .filter(d => d.cola.length < maxCola)
+        .sort((a, b) => a.cola.length - b.cola.length)[0];
+
+      if (defensa) {
+        state.pendientes = state.pendientes.filter(m => m !== best);
+        defensa.cola.push(best);
+        const zonaNombre = Object.keys(state.zonas).find(k => state.zonas[k] === best.zona);
+        simLog(`Tick ${state.tick}: [${strat}] Misil ${best.id} → Defensa ${defensa.id} (${zonaNombre}, t=${best.tiempoRestante})`, 'warn');
+      }
+    }
+  }
+
+  // Condición de fin
+  if (state.futuros.length === 0 && state.pendientes.length === 0 &&
+      state.defensas.every(d => d.cola.length === 0 && !d.ocupada)) {
+    state.terminado = true;
+    simLog(`=== Simulación terminada en tick ${state.tick} ===`, 'info');
+    toggleSim();
+  }
+}
+
+function simLog(msg, cls = '') {
+  const log = document.getElementById('simLog');
+  const line = document.createElement('div');
+  line.className = `log-line ${cls}`;
+  line.textContent = msg;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+}
+
+function drawSim() {
+  const canvas = document.getElementById('simCanvas');
+  canvas.width = canvas.offsetWidth;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const s = simState;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#080d1a';
+  ctx.fillRect(0, 0, W, H);
+
+  if (!s) return;
+
+  // Update toolbar
+  const strat = simSelectStrategy(s);
+  document.getElementById('simTick').textContent = s.tick;
+  document.getElementById('simStrategy').textContent = s.terminado ? 'Terminado' : strat;
+  document.getElementById('simStrategy').style.color = strat === 'E1' ? '#60a5fa' : '#a78bfa';
+  document.getElementById('simPending').textContent = s.pendientes.length;
+  document.getElementById('simIntercepted').textContent = s.interceptados;
+  document.getElementById('simImpacted').textContent = s.impactados;
+
+  const allMisiles = [...s.futuros, ...s.pendientes,
+    ...s.defensas.flatMap(d => d.cola)];
+
+  // --- ZONAS ---
+  const zonaNames = Object.keys(s.zonas);
+  const zonaW = Math.min(160, (W - 40) / zonaNames.length - 10);
+  const zonaStartX = 20;
+  zonaNames.forEach((nombre, i) => {
+    const zona = s.zonas[nombre];
+    const x = zonaStartX + i * (zonaW + 10);
+    const y = 20;
+    ctx.fillStyle = zona.impactado ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.15)';
+    ctx.strokeStyle = zona.impactado ? '#ef4444' : '#10b981';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(x, y, zonaW, 50, 8); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = zona.impactado ? '#fca5a5' : '#34d399';
+    ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(nombre, x + zonaW / 2, y + 18);
+    ctx.fillStyle = '#9ca3af'; ctx.font = '10px sans-serif';
+    ctx.fillText(`Crit: ${zona.criticidad} | ${zona.tipo}`, x + zonaW / 2, y + 33);
+    ctx.fillStyle = zona.impactado ? '#ef4444' : '#10b981'; ctx.font = 'bold 10px sans-serif';
+    ctx.fillText(zona.impactado ? '💥 IMPACTADA' : '✓ INTACTA', x + zonaW / 2, y + 46);
+  });
+
+  // --- MISILES FUTUROS ---
+  const futY = 90;
+  ctx.fillStyle = '#374151'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('Futuros:', 20, futY);
+  s.futuros.forEach((m, i) => {
+    const x = 80 + i * 75, y = futY - 10;
+    ctx.fillStyle = 'rgba(55,65,81,0.6)';
+    ctx.strokeStyle = '#4b5563'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(x, y, 65, 22, 4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#9ca3af'; ctx.font = '10px monospace'; ctx.textAlign = 'center';
+    ctx.fillText(`M${m.id} (t=${m.tiempoAparicion})`, x + 32, y + 14);
+  });
+
+  // --- MISILES PENDIENTES ---
+  const pendY = 130;
+  ctx.fillStyle = '#9ca3af'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText('Pendientes:', 20, pendY);
+  s.pendientes.forEach((m, i) => {
+    const x = 95 + i * 80, y = pendY - 10;
+    const urgente = m.tiempoRestante <= TIEMPO_RECARGA;
+    ctx.fillStyle = urgente ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.15)';
+    ctx.strokeStyle = urgente ? '#ef4444' : '#f59e0b'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.roundRect(x, y, 70, 26, 4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = urgente ? '#fca5a5' : '#fbbf24';
+    ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center';
+    ctx.fillText(`M${m.id}`, x + 35, y + 11);
+    ctx.fillStyle = '#d1d5db'; ctx.font = '9px monospace';
+    ctx.fillText(`t=${m.tiempoRestante} esp=${m.ticksEspera}`, x + 35, y + 22);
+  });
+
+  // --- DEFENSAS ---
+  const defY = 200;
+  const defW = Math.min(200, (W - 40) / 3 - 10);
+  s.defensas.forEach((d, i) => {
+    const x = 20 + i * (defW + 10);
+    const h = 150;
+
+    // Fondo
+    ctx.fillStyle = d.ocupada ? 'rgba(59,130,246,0.15)' : 'rgba(31,41,55,0.8)';
+    ctx.strokeStyle = d.ocupada ? '#3b82f6' : '#374151'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(x, defY, defW, h, 10); ctx.fill(); ctx.stroke();
+
+    // Título
+    ctx.fillStyle = '#f3f4f6'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(`🛡️ Defensa ${d.id}`, x + defW / 2, defY + 22);
+
+    // Estado
+    const estadoTxt = d.ocupada ? `Interceptando (recarga: ${d.recargando})` : 'Disponible';
+    ctx.fillStyle = d.ocupada ? '#60a5fa' : '#10b981';
+    ctx.font = '10px sans-serif';
+    ctx.fillText(estadoTxt, x + defW / 2, defY + 38);
+
+    // Interceptados
+    ctx.fillStyle = '#9ca3af'; ctx.font = '10px sans-serif';
+    ctx.fillText(`Interceptados: ${d.interceptados}`, x + defW / 2, defY + 54);
+
+    // Cola
+    ctx.fillStyle = '#6b7280'; ctx.font = '10px sans-serif';
+    ctx.fillText('Cola:', x + defW / 2, defY + 72);
+    if (d.cola.length === 0) {
+      ctx.fillStyle = '#374151'; ctx.font = '10px sans-serif';
+      ctx.fillText('vacía', x + defW / 2, defY + 88);
+    }
+    d.cola.forEach((m, j) => {
+      const my = defY + 82 + j * 28;
+      ctx.fillStyle = 'rgba(245,158,11,0.2)';
+      ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.roundRect(x + 10, my, defW - 20, 22, 4); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center';
+      ctx.fillText(`Misil ${m.id} (t=${m.tiempoRestante})`, x + defW / 2, my + 14);
+    });
+
+    // Barra de recarga
+    if (d.ocupada) {
+      const barY = defY + h - 20;
+      ctx.fillStyle = '#1f2937';
+      ctx.beginPath(); ctx.roundRect(x + 10, barY, defW - 20, 8, 4); ctx.fill();
+      const prog = (TIEMPO_RECARGA - d.recargando) / TIEMPO_RECARGA;
+      ctx.fillStyle = '#3b82f6';
+      ctx.beginPath(); ctx.roundRect(x + 10, barY, (defW - 20) * prog, 8, 4); ctx.fill();
+    }
+  });
+
+  // --- Terminado overlay ---
+  if (s.terminado) {
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#10b981'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Simulación Terminada', W / 2, H / 2 - 20);
+    ctx.fillStyle = '#9ca3af'; ctx.font = '16px sans-serif';
+    ctx.fillText(`Interceptados: ${s.interceptados} | Impactados: ${s.impactados} | Ticks: ${s.tick}`, W / 2, H / 2 + 20);
+  }
+}
+
+function toggleSim() {
+  if (simRunning) {
+    clearInterval(simInterval);
+    simRunning = false;
+    document.getElementById('btnPlay').textContent = '▶ Continuar';
+  } else {
+    if (!simState) simState = createSimState();
+    simRunning = true;
+    document.getElementById('btnPlay').textContent = '⏸ Pausar';
+    simInterval = setInterval(() => {
+      simTick(simState);
+      drawSim();
+    }, 200);
+  }
+}
+
+function resetSim() {
+  clearInterval(simInterval);
+  simRunning = false;
+  simState = createSimState();
+  document.getElementById('btnPlay').textContent = '▶ Iniciar';
+  document.getElementById('simLog').innerHTML = '';
+  drawSim();
+}
+
+window.addEventListener('resize', () => { drawSim(); drawAgingChart(); });
+resetSim();
+</script>
+</body>
+</html>

@@ -22,5 +22,11 @@ public abstract class EstrategiaPrioridad {
         //Consideramos si da el tiempo de recargar y hay otro misil pendiente
     }
 
+    public int getMaxCola() {
+        return Integer.MAX_VALUE;
+    }
+
     public abstract double calcular(MisilObjetivo misil);
+
+    public abstract String getNombre();
 }

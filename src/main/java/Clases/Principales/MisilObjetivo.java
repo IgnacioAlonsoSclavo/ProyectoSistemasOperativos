@@ -6,8 +6,8 @@ public class MisilObjetivo {
     private Zonas objetivo;
     private int tiempoImpacto;
     private final int TIEMPO_APARICION;
-    private int prioridad;
-    private boolean estado = false; //cambiar a enum
+    private volatile boolean estado = false;
+    private int ticksEspera = 0;
 
     public MisilObjetivo(Zonas objetivo, int tiempoImpacto, int idMisil, int tiempoAparicion) {
         this.objetivo = objetivo;
@@ -30,15 +30,33 @@ public class MisilObjetivo {
         return this.tiempoImpacto;
     }
 
-    public int GetTiempoApariciion() {
+    public int GetTiempoAparicion() {
         return this.TIEMPO_APARICION;
     }
 
     public void setEstado(boolean estado) {
-        estado = estado;
+        this.estado = estado;
     }
 
-    private void impactar(){
+    public int getTicksEspera() {
+        return ticksEspera;
+    }
+
+    public void incrementarTicksEspera() {
+        ticksEspera++;
+    }
+
+    public void decrementarTiempoImpacto() {
+        if (this.tiempoImpacto > 0) {
+            this.tiempoImpacto--;
+            if (this.tiempoImpacto == 0) {
+                impactar();
+            }
+        }
+    }
+
+    public void impactar(){
         this.estado = true;
+        this.objetivo.SetImpactado();
     }
 }

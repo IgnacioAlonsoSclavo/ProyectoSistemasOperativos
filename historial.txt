@@ -1,0 +1,251 @@
+=========================================================
+HISTORIAL DE DISCUSIONES Y CAMBIOS - PROYECTO SISTEMAS OPERATIVOS
+=========================================================
+
+---------------------------------------------------------
+1. CORRECCIÓN: while (true) en App.java
+---------------------------------------------------------
+PROBLEMA:
+  El dispatcher usaba while(true) con un break interno, lo que el IDE
+  marcaba como condición siempre verdadera.
+
+CAMBIO:
+  Se reemplazó el break por una variable booleana "hayAmenazas" como
+  condición real del while. El Thread.sleep(100) también se condicionó
+  a que hayAmenazas sea true para no dormir innecesariamente en la
+  última iteración.
+
+
+---------------------------------------------------------
+2. REVISIÓN GENERAL DE BUGS
+---------------------------------------------------------
+
+BUG 1 - GestionSistema.java (CRÍTICO):
+  El método actualizarTiempos() usaba "synchronized" sobre "this"
+  (la instancia de GestionSistema), mientras que App.java sincronizaba
+  sobre "amenazasPendientes". Al ser monitores distintos, no había
+  exclusión mutua real, lo que podía causar ConcurrentModificationException.
+  SOLUCIÓN: cambiar a synchronized(amenazasPendientes).
+
+BUG 2 - Defensa.java (CRÍTICO):
+  El método detener() solo ponía activa=false pero no llamaba notifyAll().
+  Si el hilo estaba bloqueado en wait(), quedaba dormido indefinidamente
+  y el programa nunca terminaba.
+  SOLUCIÓN: hacer detener() synchronized y agregar notifyAll().
+
+BUG 3 - CalculadorPrioridad.java (CRÍTICO):
+  El constructor creaba su propio Semaphore nuevo en lugar de recibir
+  el real de App.java. Las estrategias operaban sobre permisos ficticios
+  que no reflejaban el estado real del sistema.
+  SOLUCIÓN: recibir el Semaphore como parámetro.
+
+BUG 4 - MisilObjetivo.java (ALTO):
+  El campo "estado" no era volatile. Con múltiples hilos leyendo y
+  escribiendo ese campo, los cambios podían no ser visibles entre hilos
+  por el caché de cada núcleo.
+  SOLUCIÓN: marcar estado como volatile.
+
+BUG 5 - Estrategia2.java (ALTO):
+  Se llamaba getFirst() sobre la lista sin verificar si estaba vacía,
+  lo que podía lanzar NoSuchElementException bajo concurrencia.
+  SOLUCIÓN: agregar verificación isEmpty() antes del getFirst().
+
+
+---------------------------------------------------------
+3. DISCUSIÓN: por qué volatile en estado de MisilObjetivo
+---------------------------------------------------------
+  volatile garantiza que cuando un hilo escribe estado=true, todos los
+  demás hilos ven el cambio inmediatamente, evitando que cada núcleo
+  trabaje con su propio caché desactualizado. En este proyecto hay al
+  menos 3 hilos accediendo al campo estado simultáneamente.
+
+
+---------------------------------------------------------
+4. DISCUSIÓN: detener() en Defensa — ¿es necesario el atributo activa?
+---------------------------------------------------------
+  Sí es necesario. Sin activa, el hilo quedaría en el loop para siempre.
+  No hay otra forma de despertarlo del wait() y hacerlo terminar
+  limpiamente. Podría reemplazarse con Thread.interrupt(), pero el
+  diseño con volatile boolean es más explícito y didáctico.
+
+
+---------------------------------------------------------
+5. DISCUSIÓN: cuándo se inician y detienen las defensas
+---------------------------------------------------------
+  Se inician en el setup de App.main antes del dispatcher.
+  Se detenían con Thread.sleep(1000) fijo + detener(), lo cual era
+  frágil si las defensas tardaban más de 1 segundo.
+
+  OPCIONES DISCUTIDAS:
+  - Sleep fijo (la anterior): frágil, puede cortar defensas a mitad
+  - Daemon: la JVM las mata sola, el log queda incompleto
+  - join() (la elegida): espera exactamente hasta que cada defensa termine
+
+  CAMBIO: se guardaron los Thread en una lista y se usa t.join() por
+  cada uno, eliminando el sleep arbitrario.
+
+
+---------------------------------------------------------
+6. ANÁLISIS: qué hace el código y qué faltaba implementar (primera vez)
+---------------------------------------------------------
+  LO QUE HACÍA:
+  - 5 misiles hardcodeados presentes desde el inicio
+  - 3 defensas en hilos separados
+  - GestionSistema decrementando tiempos cada 50ms
+  - Dispatcher eligiendo misil de mayor prioridad cada 100ms (round-robin)
+  - Log final de misiles interceptados
+
+  LO QUE FALTABA:
+  - TIEMPO_APARICION no se usaba, misiles aparecían todos al inicio
+  - Impacto en hospital sin consecuencias reales
+  - Amenazas.java, Enum.java, Interfaces/Estrategias.java sin usar
+  - cantidadInterceptados era public en Defensa
+  - Estrategias con efectos secundarios dentro de calcular()
+  - CalculadorPrioridad con Semaphore propio desconectado del real
+
+
+---------------------------------------------------------
+7. IMPLEMENTACIÓN: carga de misiles desde CSV
+---------------------------------------------------------
+  DISCUSIÓN:
+  La idea era cargar los misiles desde un archivo CSV y que aparezcan
+  dinámicamente a medida que el tiempo (gestionado por GestionSistema)
+  alcance su tiempoAparicion.
+
+  CAMBIOS:
+  - Creado src/main/resources/misiles.csv con columnas:
+    id, objetivo, criticidad, tiempoImpacto, tiempoAparicion
+  - Creado CargadorMisiles.java que lee el CSV y reutiliza el mismo
+    objeto Hospital para misiles que apuntan a la misma zona
+  - GestionSistema recibe ahora "futurosMisiles" y los mueve a
+    "amenazasPendientes" cuando tiempoAparicion <= tick actual
+  - App.java ya no tiene misiles hardcodeados
+  - La condición de salida del dispatcher cambió a: salir solo cuando
+    AMBAS listas (amenazasPendientes y futurosMisiles) estén vacías
+  - Corregido typo: GetTiempoApariciion → GetTiempoAparicion
+
+
+---------------------------------------------------------
+8. REVISIÓN DE BUGS (segunda vez, post-CSV)
+---------------------------------------------------------
+
+BUG 1 - Hospital.java (GRAVE):
+  Hospital declaraba su propio campo "impactado" que ocultaba el de
+  Zonas (campo shadowing). Cuando SetImpactado() se llamaba, modificaba
+  el campo de Zonas, pero Hospital.GetImpactado() leía el suyo propio,
+  que siempre era false. El impacto nunca se detectaba correctamente.
+  SOLUCIÓN: eliminar el campo duplicado de Hospital, hereda de Zonas.
+
+BUG 2 - Estrategia1 y Estrategia2 (GRAVE):
+  calcular() era llamado para CADA misil dentro del stream().max().
+  Dentro había acquire()/release() y setEstado(true), lo que podía:
+  - Bloquear el dispatcher dentro de synchronized(amenazasPendientes)
+  - Marcar misiles como interceptados en orden aleatorio
+  SOLUCIÓN: eliminar todos los efectos secundarios de calcular().
+  El cálculo de prioridad debe ser puro (sin efectos secundarios).
+  También se eliminó el Semaphore de ambas estrategias ya que quedó
+  sin uso.
+
+BUG 3 - Defensa.java:
+  cantidadInterceptados era public.
+  SOLUCIÓN: cambiado a private.
+
+
+---------------------------------------------------------
+9. DISCUSIÓN: qué es el dispatcher
+---------------------------------------------------------
+  El dispatcher es el coordinador central: cada 100ms toma el misil de
+  mayor prioridad de amenazasPendientes y lo encola en una defensa.
+  Actúa como "jefe de turno" que decide qué problema atender primero
+  y a quién mandárselo. Las defensas son los trabajadores que ejecutan.
+
+
+---------------------------------------------------------
+10. DISCUSIÓN: hilos definidos en el sistema
+---------------------------------------------------------
+  Total: 5 hilos
+
+  - Hilo main (App): dispatcher + setup + teardown
+  - GestionSistema (1 hilo): daemon, gestiona tiempos
+  - Defensa (3 hilos): cada una espera misiles en su cola con wait()
+
+
+---------------------------------------------------------
+11. CAMBIO: mover el dispatcher a GestionSistema
+---------------------------------------------------------
+  DISCUSIÓN:
+  El hilo main hacía dos cosas: setup y dispatcher. Lo correcto es que
+  main solo haga setup y espera, y que GestionSistema maneje todo lo
+  que corre en tiempo real.
+
+  CAMBIOS:
+  - GestionSistema recibe ahora: amenazasPendientes, futurosMisiles,
+    lista de defensas y CalculadorPrioridad
+  - GestionSistema ejecuta dispatch() cada 2 ticks (100ms)
+  - Cuando ambas listas están vacías, GestionSistema llama detener()
+    en las defensas
+  - App.main quedó solo con: setup, start de hilos, join(), log final
+  - GestionSistema sigue siendo daemon: cuando main termina (después
+    del join), la JVM lo mata automáticamente
+
+  HILOS ACTUALES:
+  - Hilo main: solo setup y join()
+  - GestionSistema (1 hilo daemon): tiempos + aparición de misiles +
+    dispatch
+  - Defensa (3 hilos): interceptan misiles
+
+
+---------------------------------------------------------
+12. DISCUSIÓN: estrategias — cuándo se usa cada una
+---------------------------------------------------------
+  CalculadorPrioridad elige la estrategia según:
+    2 × defensas libres >= misiles pendientes → Estrategia1 (poca carga)
+    caso contrario                            → Estrategia2 (saturación)
+
+  Estrategia1: prioriza el misil más urgente (menor tiempoImpacto)
+  Estrategia2: balancea urgencia y criticidad del objetivo
+
+
+---------------------------------------------------------
+13. CORRECCIÓN: estrategia se seleccionaba por misil en vez de por dispatch
+---------------------------------------------------------
+  PROBLEMA:
+  calcular() llamaba seleccionarEstrategia() internamente, lo que
+  significa que para una lista de N misiles se seleccionaba la estrategia
+  N veces. Como el semáforo cambia en paralelo, distintos misiles del
+  mismo dispatch podían ser evaluados con fórmulas distintas, haciendo
+  que la comparación del max() no tuviera sentido (comparar peras con
+  manzanas).
+
+  SOLUCIÓN:
+  seleccionarEstrategia() se hizo público en CalculadorPrioridad.
+  En GestionSistema.dispatch() se llama una sola vez antes del stream,
+  y esa estrategia se usa para evaluar todos los misiles del mismo
+  dispatch de forma consistente.
+
+
+=========================================================
+ESTADO FINAL DEL SISTEMA
+=========================================================
+
+ARCHIVOS PRINCIPALES:
+  - App.java              : setup y teardown únicamente
+  - GestionSistema.java   : tiempo, aparición de misiles, dispatch
+  - CalculadorPrioridad.java : selección de estrategia
+  - Estrategia1.java      : prioridad por urgencia (poca carga)
+  - Estrategia2.java      : prioridad por criticidad/tiempo (saturación)
+  - Defensa.java          : hilo que intercepta misiles
+  - MisilObjetivo.java    : representa un misil con su objetivo y tiempos
+  - Hospital.java / Zonas.java : zonas objetivo
+  - CargadorMisiles.java  : lectura del CSV
+  - misiles.csv           : datos de los misiles
+
+ARCHIVOS SIN USO (código muerto):
+  - Amenazas.java
+  - Enum.java
+  - Interfaces/Estrategias.java
+
+PENDIENTE DE IMPLEMENTAR:
+  - Log de hospitales impactados (misiles no interceptados a tiempo)
+  - Cantidad de defensas configurable (actualmente hardcodeada en 3)
+  - Asignación inteligente de defensas según disponibilidad

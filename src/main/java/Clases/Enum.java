@@ -2,10 +2,7 @@ package Clases;
 
 public class Enum {
     public enum TipoZona {
-        CIVIL, MILITAR, INDUSTRIAL
+        CIVIL, MILITAR, INDUSTRIAL, GUBERNAMENTAL
     }
 
-    public enum EstadoDefensa {
-        DISPONIBLE, INTERCEPTANDO
-    }
 }

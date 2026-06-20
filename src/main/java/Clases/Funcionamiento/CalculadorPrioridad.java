@@ -1,6 +1,7 @@
 package Clases.Funcionamiento;
 
-import Clases.Principales.Defensa;
+import Clases.Funcionamiento.Estrategias.Estrategia1;
+import Clases.Funcionamiento.Estrategias.Estrategia2;
 import Clases.Principales.MisilObjetivo;
 
 import java.util.LinkedList;
@@ -12,21 +13,16 @@ public class CalculadorPrioridad {
     private LinkedList<MisilObjetivo> amenazasPendientes;
     private Semaphore defensasDisponibles;
 
-    public CalculadorPrioridad(LinkedList<MisilObjetivo> amenazasPendientes, int cantidadDefensas) {
+    public CalculadorPrioridad(LinkedList<MisilObjetivo> amenazasPendientes, Semaphore defensasDisponibles) {
         this.amenazasPendientes = amenazasPendientes;
-        this.defensasDisponibles = new Semaphore(cantidadDefensas);
+        this.defensasDisponibles = defensasDisponibles;
     }
 
-    public double calcular(MisilObjetivo misil) {
-        EstrategiaPrioridad estrategia = seleccionarEstrategia();
-        return estrategia.calcular(misil);
-    }
-
-    private EstrategiaPrioridad seleccionarEstrategia() {
-        if (defensasDisponibles.availablePermits() >= amenazasPendientes.size()) {
-            return new Estrategia1(amenazasPendientes, defensasDisponibles);
+    public EstrategiaPrioridad seleccionarEstrategia() {
+        if (2 * defensasDisponibles.availablePermits() >= amenazasPendientes.size()) {
+            return new Estrategia1(amenazasPendientes);
         } else {
-            return new Estrategia2(amenazasPendientes, defensasDisponibles);
+            return new Estrategia2(amenazasPendientes);
         }
     }
 }

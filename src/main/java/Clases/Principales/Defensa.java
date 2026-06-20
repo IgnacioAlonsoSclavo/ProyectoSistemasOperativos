@@ -1,30 +1,64 @@
 package Clases.Principales;
 
-import java.util.LinkedList;
+import Clases.Funcionamiento.EstrategiaPrioridad;
+import Clases.Funcionamiento.RelojSistema;
+import Interfaces.Defensas;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.Semaphore;
 
-public class Defensa implements Runnable {
+public class Defensa implements Runnable, Defensas {
 
-    public int cantidadInterceptados = 0;
+    private int cantidadInterceptados = 0;
     public final int ID_DEFENSA;
-    private Queue<MisilObjetivo> misilesInterseptar;
+    private Queue<MisilObjetivo> misilesInterceptar;
     private Semaphore defensasDisponibles;
-    private volatile boolean activa = true; // Para poder detener el hilo
+    private RelojSistema reloj;
+    private volatile boolean activa = true;
+    private volatile boolean ocupada = false;
 
-    public Defensa(int idDefensa, Semaphore defensasDisponibles) {
+    public boolean isOcupada() {
+        return ocupada;
+    }
+
+    public Defensa(int idDefensa, Semaphore defensasDisponibles, RelojSistema reloj) {
         this.ID_DEFENSA = idDefensa;
-        this.misilesInterseptar = new LinkedList<>();
+        this.misilesInterceptar = new ArrayDeque<>();
         this.defensasDisponibles = defensasDisponibles;
+        this.reloj = reloj;
     }
 
     public synchronized void encolarMisil(MisilObjetivo misil) {
-        misilesInterseptar.add(misil);
+        misilesInterceptar.add(misil);
         notify(); // Despierta el hilo si estaba esperando
     }
 
-    public void detener() {
+    public synchronized int getCantidadEnCola() {
+        return misilesInterceptar.size();
+    }
+
+    public synchronized List<MisilObjetivo> vaciarCola() {
+        List<MisilObjetivo> devueltos = new ArrayList<>(misilesInterceptar);
+        misilesInterceptar.clear();
+        return devueltos;
+    }
+
+    @Override
+    public int getId() {
+        return ID_DEFENSA;
+    }
+
+    @Override
+    public int getCantidadInterceptados() {
+        return cantidadInterceptados;
+    }
+
+    public synchronized void detener() {
         activa = false;
+        notifyAll();
     }
 
     @Override
@@ -33,33 +67,36 @@ public class Defensa implements Runnable {
             MisilObjetivo misil = null;
 
             synchronized (this) {
-                while (misilesInterseptar.isEmpty() && activa) {
+                while (misilesInterceptar.isEmpty() && activa) {
                     try {
                         wait(); // Espera hasta que haya un misil
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     }
                 }
-                if (!misilesInterseptar.isEmpty()) {
-                    misil = misilesInterseptar.poll();
+                if (!misilesInterceptar.isEmpty()) {
+                    misil = misilesInterceptar.poll();
                 }
             }
 
             if (misil != null) {
-                interseptar(misil);
+                interceptar(misil);
             }
         }
     }
 
-    private void interseptar(MisilObjetivo misil) {
+    private void interceptar(MisilObjetivo misil) {
         try {
-            defensasDisponibles.acquire(); // Ocupa el permiso mientras intercepta
-            misil.setEstado(false);
+            defensasDisponibles.acquire();
+            ocupada = true;
+            misil.setEstado(true);
             cantidadInterceptados++;
+            reloj.esperarTicks(EstrategiaPrioridad.TIEMPO_RECARGA);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } finally {
-            defensasDisponibles.release(); // Libera el permiso al terminar
+            ocupada = false;
+            defensasDisponibles.release();
         }
     }
 }
